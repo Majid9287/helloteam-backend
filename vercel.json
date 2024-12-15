@@ -1,3 +1,4 @@
+
 {
     "version": 2,
     "builds": [
@@ -14,7 +15,6 @@
     ],
     "env": {
       "NODE_ENV": "production"
-    },
-    "ignoreCommand": "git clean -fdx"
+    }
   }
   
