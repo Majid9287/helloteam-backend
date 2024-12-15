@@ -5,7 +5,7 @@ import  { ticketSyncEmitter }  from '../../services/eventEmitter/index.js';
 import catchAsync from '../../utils/catchAsync.js';
 import { sendSuccessResponse, sendErrorResponse } from '../../utils/responseHandler.js';
 import ZingtreeDataSyncService from '../../services/zingtree/index.js';
-
+import User from '../../models/UserModel.js';
 
 export const syncZingtreeTrees = catchAsync(async (req, res) => {
   try {
@@ -23,12 +23,12 @@ export const register = catchAsync(async (req, res, next) => {
   try {
     const organization = await Organization.create({
       ...req.body,
-      registeredBy: req.body.userId,
+      registeredBy: req.body.registeredBy||req.body.userId,
       syncStatus: 'pending'
     });
 
     await User.findByIdAndUpdate(
-      req.body.userId,
+      req.body.registeredBy || req.body.userId,
       { organization: organization._id },
     );
 

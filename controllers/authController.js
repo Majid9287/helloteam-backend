@@ -4,7 +4,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/tokenUtils.js";
-import crypto from "crypto";
+import AppError from '../utils/appError.js';
 import bcrypt from "bcrypt";
 
 // Signup
@@ -47,14 +47,21 @@ export const signin = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    // Explicitly select the password field
+    const user = await User.findOne({ email }).select('+password');
+    
+    if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-c
+
+    // Compare the provided password with the hashed password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
     // Generate tokens
-    const accessToken = generateAccessToken(user._id, user.role, user.profileId || null);
+    const accessToken = generateAccessToken(user._id, user.role, user.organization || null);
     const refreshToken = generateRefreshToken(user._id);
 
     // Set cookies
@@ -77,6 +84,7 @@ c
     return res.status(500).json({ message: "Error signing in", error: err.message });
   }
 };
+
 
 export const refreshToken = async (req, res) => {
   const { refreshToken } = req.cookies;

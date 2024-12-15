@@ -21,6 +21,7 @@ app.use(cors({
 
 
 // Import Routes
+import userRoutes from './routes/userRoutes.js';
 
 import authRoutes from './routes/authRoutes.js';
 import tickets from './routes/ticketRoutes.js';
@@ -30,7 +31,8 @@ app.use('/api/auth', authRoutes);
 
 app.use('/api/tickets', tickets);
 app.use('/api/organization', organization);
-
+app.use('/api/users', userRoutes);
+// app.use('/api/v1/users', userRoutes);
 // Root Route
 app.get('/', (req, res) => {
     res.send('Backend is running...');

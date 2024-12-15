@@ -1,0 +1,3 @@
+2024-12-15T21:43:04.209Z [error]: Organization validation failed: organizationName: Path `organizationName` is required.
+2024-12-15T21:43:31.072Z [error]: User is not defined
+2024-12-15T21:45:10.176Z [error]: E11000 duplicate key error collection: hellowteam.organizations index: organizationName_1 dup key: { organizationName: "hellowtest" }
