@@ -1,0 +1,720 @@
+
+
+Overview
+Zingtree makes it easy to find trees, or import data from your sessions into any other system via a standard API. This is primarily for use in scheduled jobs, after the user sessions have occurred. For sending and receiving data during a decision tree session, please refer to Zingtree Webhooks instead.
+
+Zingtree uses a RESTful API, with easy support for any language. You can also use our PHP wrapper, or this Python source code and command line interface.
+
+If needed, your API Key can be found at the bottom of the Account, Organizations and Billing page.
+
+The following operations are available:
+
+agent_add
+agent_tag
+agent_remove
+agent_sessions
+delete_file_upload
+delete_form_data
+event_log
+get_form_data
+get_session_data
+get_session_data_pure
+get_session_notes
+get_tags
+get_tree_structure
+get_tree_variables
+get_trees
+get_tree_tag_all
+get_tree_tag_any
+search_trees
+session_freeze
+tree_sessions
+tree_sessions_last_clicked
+All results are returned in JSON format. The examples below use trees and sessions from the Zingtree Gallery.
+
+Please Note: There is a limit of 6000 API calls per day for each organization.
+
+
+Status Codes
+
+The API will also return HTTP Status codes as follows:
+
+200 (Success): The query was successful.
+404 (Not Found): The session ID or API Key was not found.
+500 (Server Error): The operation requested is not supported.
+agent_add
+Description:
+Adds an agent to your organization
+
+This is a no-login agent, so access must be through SSO or Google Authentication
+
+Structure:
+https://zingtree.com/api/agent_add/{{apikey}}/{{agent name}}/{{agent login}}
+
+Live Example:
+https://zingtree.com/api/agent_add/6a103737e44e4aa6e1e4b6b0bcb46f83/Bill%20Zing/billzing@mydomain.com
+Example PHP call:
+zt_agent_add('6a103737e44e4aa6e1e4b6b0bcb46f83', 'Bill Zing', 'billzing@mydomain.com');
+Example Return:
+{"count":1,"agent_name":"Bill Zing","agent_login":"billzing@mydomain.com"}
+agent_tag
+Description:
+Set or update tags for an agent in your organization. Multiple tags are separated by commas.
+
+Structure:
+https://zingtree.com/api/agent_tag/{{apikey}}/{{agent login}}/{{tags}}
+
+Live Example:
+https://zingtree.com/api/agent_tag/6a103737e44e4aa6e1e4b6b0bcb46f83/billzing@mydomain.com/tag1,tag2
+Example PHP call:
+zt_agent_tag('6a103737e44e4aa6e1e4b6b0bcb46f83', 'billzing@mydomain.com','tag1,tag2');
+Example Return:
+{
+    "op": "agent_tag",
+    "result": "Success",
+    "agent_login": "billzing@mydomain.com"
+}
+agent_remove
+Description:
+Removes an agent from your organization
+
+Structure:
+https://zingtree.com/api/agent_remove/{{apikey}}/{{agent login}}
+
+Live Example:
+https://zingtree.com/api/agent_remove/6a103737e44e4aa6e1e4b6b0bcb46f83/billzing@mydomain.com
+Example PHP call:
+zt_agent_remove('6a103737e44e4aa6e1e4b6b0bcb46f83', 'billzing@mydomain.com');
+Example Return:
+{
+    "count":1,
+    "agent_login":"billzing@mydomain.com"
+}
+agent_sessions
+Description:
+Returns a JSON structure with session information for a particular agent and date range.
+
+Start date and end date are in the form of YYYY-MM-DD. If blank, returns sessions for last 30 days.
+
+If agent is *, return sessions for all agents.
+
+Structure:
+https://zingtree.com/api/agent_sessions/{{apikey}}/{{agent}}/{{start date}}/{{end date}}
+
+Live Example:
+https://zingtree.com/api/agent_sessions/6a103737e44e4aa6e1e4b6b0bcb46f83/*/2024-12-05/2024-12-12
+Example PHP call:
+zt_agent_sessions('6a103737e44e4aa6e1e4b6b0bcb46f83', '*', '2024-12-05', '2024-12-12');
+Example Return:
+{
+    "op":"agent_sessions", 
+    "count":3, 
+    "agent":"", 
+    "start_date":"2016-03-20", 
+    "end_date":"2016-03-20",
+    "sessions":[
+        {"session_id":"9f5a6cb4b1dd47c990e230abbdc5baf2","agent":"Bill","start_time":"2016-03-20 00:07:55","resolution_state":"Y","total_score":"0","tree_id":"815089605"}},
+        {"session_id":"23cd2c6474724190ac551223971a6f54","agent":"Tom","start_time":"2016-03-20 00:12:16","resolution_state":"N","total_score":"0","tree_id":"815089605"}},
+        {"session_id":"Gallery24-14584700538357","agent":"","start_time":"2016-03-20 03:34:13","resolution_state":"?","total_score":"0","tree_id":"815089605"}}
+    ]
+}
+delete_file_upload
+Description:
+Deletes an uploaded file from the Zingtree server. (The examples below would delete a file at https://uploads.zingtree.com/pdf/Original_Document_Node-PREVIEW-734273024-1590648603-1590648630.pdf)
+
+Structure:
+https://zingtree.com/api/delete_file_upload/{{folder}}/{{file name}}
+
+Live Example:
+https://zingtree.com/api/delete_file_upload/pdf/Original_Document_Node-PREVIEW-734273024-1590648603-1590648630.pdf
+Example PHP call:
+zt_delete_file_upload ("pdf", "Original_Document_Node-PREVIEW-734273024-1590648603-1590648630.pdf");
+Example Return:
+{ "result":"OK" }
+delete_form_data
+Description:
+Deletes any form data entered into Zingtree during a session.
+
+Structure:
+https://zingtree.com/api/session/{{session ID}}/delete_form_data
+
+Live Example:
+https://zingtree.com/api/session/Gallery55-14866585251316/delete_form_data
+Example PHP call:
+zt_delete_form_data ("Gallery55-14866585251316");
+Example Return:
+{ "result":"OK" }
+event_log
+Description:
+Returns a JSON structure with the event log for your organization in a date range.
+
+Start date and end date are in the form of YYYY-MM-DD. If blank, returns events for last 30 days.
+
+Dates are in PST.
+
+Structure:
+https://zingtree.com/api/event_log/{{apikey}}/{{start date}}/{{end date}}
+
+Live Example:
+https://zingtree.com/api/event_log/6a103737e44e4aa6e1e4b6b0bcb46f83/2024-12-05/2024-12-12
+Example PHP call:
+zt_event_log('6a103737e44e4aa6e1e4b6b0bcb46f83', '2024-12-05', '2024-12-12');
+Example Return:
+{
+    "op": "event_log",
+    "count": 3,
+    "results": [
+        {
+            "severity": "0",
+            "type": "Webhook",
+            "tree_id": "203643337",
+            "user_name": "Zingtree",
+            "session_id": "Gallery66-15663071273739",
+            "data": "https://zingtree.com\/apps\/webhook\/filters\/zippopotamus.php?zip=75013",
+            "details": "{\"zip\":\"75013\",\"state\":\"Texas\",\"state_abbreviation\":\"TX\",\"city\":\"Allen\"}",
+            "timestamp": "2019-08-20 06:18:51",
+            "ip": "192.2.2.2"
+        },
+        {
+            "severity": "0",
+            "type": "Tree Changed",
+            "tree_id": "958060817",
+            "user_name": "Bill Zing ",
+            "session_id": "",
+            "data": "958060817",
+            "details": "Designer - Add Button from Node #1 to Node #16",
+            "timestamp": "2019-08-22 12:41:44",
+            "ip": "54.1.1.1"
+        },		
+        {
+            "severity": "0",
+            "type": "Email Sent",
+            "tree_id": "591588065",
+            "user_name": "Zingtree",
+            "session_id": "f8dca0dfb9b44477acf0b7c2dd2d1347",
+            "data": "bill@zingtree.com",
+            "details": "Auto-Sent via Email Node #5. Result: queued.  Update: send.",
+            "timestamp": "2019-08-21 18:54:45",
+            "ip": "54.70.2.21"
+        },
+        
+    ]
+}
+get_form_data
+Description:
+Returns a JSON structure with form variables and values entered during a session.
+
+Structure:
+https://zingtree.com/api/session/{{session ID}}/get_form_data
+
+Live Example:
+https://zingtree.com/api/session/Gallery122-15513801703897/get_form_data
+Example PHP call:
+zt_get_form_data ("Gallery122-15513801703897");
+Example Return:
+{  
+    "name":"Bill Zing",
+    "comment":"I think Zingtree is great!"
+}
+get_session_data
+Description:
+Returns a JSON structure with details about a session.
+
+Structure:
+https://zingtree.com/api/session/{{session ID}}/get_session_data
+
+Live Example:
+https://zingtree.com/api/session/Gallery122-15513801703897/get_session_data
+Example PHP call:
+zt_get_session_data ("Gallery122-15513801703897");
+Example Return:
+{
+    "op": "get_session_data",
+    "source": "Gallery User",
+    "os": "Win10",
+    "browser": "Chrome Generic",
+    "start_time_pst": "2029-03-01 13:01:00",
+    "start_time_utc": "2029-03-01 9:01:00",
+    "last_click_time_pst": "2019-03-01 15:01:00",
+    "last_click_time_utc": "2019-03-01 11:01:00",
+    "tree_id": "176104936000",
+    "tree_name": "Life Insurance Sales (with Form Fields & Verification)",
+    "total_score": "0",
+    "ip": "0.0.0.0",
+    "result": "Y",
+    "notes": "This is an example note",
+    "time_spent": "4:10",
+    "duration_seconds": 250,
+    "path": [
+        {
+            "question": "?",
+            "page_title": "Welcome",
+            "subtree": "Life Insurance Sales (with Form Fields & Verification)",
+            "from_node_id": "12",
+            "to_node_id": "1",
+            "source": "Gallery User",
+            "seq": 1,
+            "time": "1:02",
+            "seconds": 62,
+            "button_text": "Continue"
+        },
+        {
+            "question": "How long should the policy last?",
+            "page_title": "Welcome",
+            "subtree": "Life Insurance Sales (with Form Fields & Verification)",
+            "from_node_id": "1",
+            "to_node_id": "2",
+            "source": "Gallery User",
+            "seq": 2,
+            "time": "1:11",
+            "seconds": 71,
+            "button_text": "10 years or less"
+        }
+    ]
+}                    
+get_session_data_pure
+Description:
+Returns a JSON structure with details about a session. This is identical to get_session_data, except it eliminates the back and restart operations, returning a "pure" linear path through the tree.
+
+Structure:
+https://zingtree.com/api/session/{{session ID}}/get_session_data_pure
+
+Live Example:
+https://zingtree.com/api/session/Gallery122-15513801703897/get_session_data_pure
+Example PHP call:
+zt_get_session_data_pure ("Gallery122-15513801703897");
+Example Return:
+{
+    "op": "get_session_data",
+    "source": "Gallery User",
+    "os": "Win10",
+    "browser": "Chrome Generic",
+    "start_time_pst": "2029-03-01 13:01:00",
+    "start_time_utc": "2029-03-01 9:01:00",
+    "last_click_time_pst": "2019-03-01 15:01:00",
+    "last_click_time_utc": "2019-03-01 11:01:00",
+    "tree_id": "176104936000",
+    "tree_name": "Life Insurance Sales (with Form Fields & Verification)",
+    "total_score": "0",
+    "ip": "0.0.0.0",
+    "result": "Y",
+    "notes": "This is an example note",
+    "time_spent": "4:10",
+    "duration_seconds": 250,
+    "path": [
+        {
+            "question": "?",
+            "page_title": "Welcome",
+            "subtree": "Life Insurance Sales (with Form Fields & Verification)",
+            "from_node_id": "12",
+            "to_node_id": "1",
+            "source": "Gallery User",
+            "seq": 1,
+            "time": "1:02",
+            "seconds": 62,
+            "button_text": "Continue"
+        },
+        {
+            "question": "How long should the policy last?",
+            "page_title": "Welcome",
+            "subtree": "Life Insurance Sales (with Form Fields & Verification)",
+            "from_node_id": "1",
+            "to_node_id": "2",
+            "source": "Gallery User",
+            "seq": 2,
+            "time": "1:11",
+            "seconds": 71,
+            "button_text": "10 years or less"
+        }
+    ]
+}                    
+get_session_notes
+Description:
+Returns a JSON structure with agent-entered notes from a session.
+
+Structure:
+https://zingtree.com/api/session/{{session ID}}/get_session_notes
+
+Live Example:
+https://zingtree.com/api/session/Gallery122-15513801703897/get_session_notes
+Example PHP call:
+zt_get_session_notes ("Gallery122-15513801703897");
+Example Return:
+{  
+    "notes":"These are sample notes entered for this session.",
+}                    
+get_tags
+Description:
+Returns a JSON structure with all tags used in your organization's trees.
+
+Structure:
+https://zingtree.com/api/tree/{{apikey}}/get_tags
+
+Live Example:
+https://zingtree.com/api/tree/6a103737e44e4aa6e1e4b6b0bcb46f83/get_tags
+Example PHP call:
+zt_get_tags ("6a103737e44e4aa6e1e4b6b0bcb46f83");
+Example Return:
+{
+    "op": "get_tags",
+    "count": 19,
+    "tags": [
+        "astrodemo",
+        "astrology",
+        "call_center",
+        "demo",
+        "demo_agent",
+        "gallery",
+        "insurance",
+        "master_finder",
+        "medical",
+        "misc",
+        "pet_rock",
+        "PL_FAQ",
+        "retail",
+        "support",
+        "testtag",
+        "webhooks",
+        "zingtree",
+        "zingtree_demos",
+        "zinsurance"
+    ]
+}                    
+get_tree_structure
+Description:
+Returns a JSON structure with the basic content from a tree.
+
+Structure:
+https://zingtree.com/api/get_tree_structure/{{apikey}}/{{tree id}}
+
+Live Example:
+https://zingtree.com/api/get_tree_structure/6a103737e44e4aa6e1e4b6b0bcb46f83/815089605
+Example PHP call:
+zt_get_tree_structure ("6a103737e44e4aa6e1e4b6b0bcb46f83",815089605);
+Example Return:
+{
+    "tree_id": "815089605",
+    "tree_name": "Agent Script - Set Appointment",
+    "description": "This demo shows an example of how to script a maintenance appointment.",
+    "root_node_id": "1",
+    "nodes": [
+        {
+            "node_id": "1",
+            "page_title": "Welcome",
+            "question": "Would you like to schedule a time for a technician to come out in the next week?",
+            "success": "?",
+            "content": "
+This is Sheryl with Acme Water Systems. I see in my system you are due for routine maintenance for your water filtration system.<\/p>",
+            "keywords", "",
+            "tags": "",
+            "buttons": [
+                {
+                    "button_text": "Yes",
+                    "button_link": "2"
+                },
+                {
+                    "button_text": "No",
+                    "button_link": "3"
+                }
+            ]
+        },		
+
+...
+
+get_tree_variables
+Description:
+Returns a JSON structure with all the variables defined and used within a tree.
+
+Structure:
+https://zingtree.com/api/get_tree_variables/{{apikey}}/{{tree id}}
+
+Live Example:
+https://zingtree.com/api/get_tree_variables/6a103737e44e4aa6e1e4b6b0bcb46f83/176104936
+Example PHP call:
+zt_get_tree_variables ("6a103737e44e4aa6e1e4b6b0bcb46f83",176104936);
+Example Return:
+{
+    "op": "get_tree_variables",
+    "tree_id": 176104936,
+    "count": 9,
+    "vars": [
+        "State",
+        "address1",
+        "address2",
+        "city",
+        "email",
+        "name",
+        "phone",
+        "product",
+        "zip"
+    ]
+}
+get_trees
+Description:
+Returns a JSON structure with information about all of an organization's trees.
+
+Please note: This only shows trees not marked as hidden in the tree's Settings.
+
+Structure:
+https://zingtree.com/api/tree/{{apikey}}/get_trees
+
+Live Example:
+https://zingtree.com/api/tree/6a103737e44e4aa6e1e4b6b0bcb46f83/get_trees
+Example PHP call:
+zt_get_trees ("6a103737e44e4aa6e1e4b6b0bcb46f83");
+Example Return:
+{
+    "op":"get_trees",
+    "count":3,
+    "trees": [
+        {"name":"Pet Rock Demo","description":"Zingtree demo using the Pet Rock","tree_id":"164166011", "tags":"gallery troubleshooting"},
+        {"name":"Intercom.io Demo","description":"Shows how to gather data and insert it into an Intercom.io chat window.","tree_id":"172041421", "tags":"gallery chat"},
+        {"name":"Narcissist Test","description":"Narcissism test, adapted from The Narcissist Test by Dr Craig Malkin\r\n\r\n","tree_id":"229818441", "tags":"gallery scoring"}
+    ]
+}                    
+get_tree_tag_all
+Description:
+Returns a JSON structure with trees that have ALL tags in a comma delimited list.
+
+Structure:
+https://zingtree.com/api/tree/{{apikey}}/get_tree_tag_all/{{taglist}}
+
+Live Example:
+https://zingtree.com/api/tree/6a103737e44e4aa6e1e4b6b0bcb46f83/get_tree_tag_all/demo,gallery
+Example PHP call:
+zt_get_tree_tag_all('6a103737e44e4aa6e1e4b6b0bcb46f83', 'demo,gallery');
+Example Return:
+{
+    "count":1,
+    "results":[
+        {"id":"14","name":"Astrology Site - Troubleshooting Demo","tags":"demo,gallery,testtag2","description":"Interactive guide to assist subscribers who have questions about their account"}
+    ]
+}
+get_tree_tag_any
+Description:
+Returns a JSON structure with trees that have ANY tags in a comma delimited list.
+
+Structure:
+https://zingtree.com/api/tree/{{apikey}}/get_tree_tag_any/{{taglist}}
+
+Live Example:
+https://zingtree.com/api/tree/6a103737e44e4aa6e1e4b6b0bcb46f83/get_tree_tag_any/demo,gallery
+Example PHP call:
+zt_get_tree_tag_any('6a103737e44e4aa6e1e4b6b0bcb46f83', 'demo,gallery');
+Example Return:
+{
+    "count":4,
+    "results":[
+        {"id":"14","name":"Astrology Site - Troubleshooting Demo","tags":"demo,gallery,testtag2","description":"Interactive guide to assist subscribers who have questions about their account"},
+        {"id":"120169628","name":"Zapier Demo","tags":"gallery","description":"Demonstrates how to  send data from Zingtree to 500+ apps supported by Zapier."},
+        {"id":"164166011","name":"Pet Rock Demo","tags":"gallery","description":"Zingtree demo using the Pet Rock"},
+        {"id":"207620939","name":"What To Wear Demo","tags":"demo","description":"This is a tree for the \"What to Wear\" example used in the tutorials."}
+    ]
+}                    
+search_trees
+Description:
+Returns a JSON structure with information about all of an organization's trees and nodes matching search text. The searches look for a match on any phrase in the node title, content, question and search keywords.
+
+You can use multiple search keywords for an AND search operation. To do this, separate the search terms in the search text with ^^
+
+Structure:
+https://zingtree.com/api/tree/{{apikey}}/search_trees/{{search text}}
+
+Live Examples:
+https://zingtree.com/api/tree/6a103737e44e4aa6e1e4b6b0bcb46f83/search_trees/Demo
+https://zingtree.com/api/tree/6a103737e44e4aa6e1e4b6b0bcb46f83/search_trees/Demo^^Order
+Example PHP call:
+zt_search_trees ("6a103737e44e4aa6e1e4b6b0bcb46f83", "Demo");
+Example Return:
+{
+    "count":6,
+    "results": [
+        {"tree_id":"225470905","name":"Form Fields and Data Entry Demo","node":"2","page_title":"Summary"},
+        {"tree_id":"539252574","name":"Freshdesk Integration example","node":"1","page_title":"Welcome"},
+        {"tree_id":"172041421","name":"Intercom.io Demo","node":"1","page_title":"Start"},
+        {"tree_id":"164166011","name":"Pet Rock Demo","node":"1","page_title":"The Care and Training of Your PET ROCK"},
+        {"tree_id":"867287049","name":"Zingtree Tour","node":"1","page_title":"Zingtree Tour"},
+        {"tree_id":"723996162","name":"Zopim Demo","node":"1","page_title":"Start"}
+    ]
+}
+session_freeze
+Description:
+Freezes a session from being continued or shared.
+
+A frozen session can no longer be resumed. If a session resume is attempted the user will start a new session with a new session id.
+
+Structure:
+PUT https://zingtree.com/api/session_freeze
+
+Body (JSON):
+{
+    "session_id": "session_1234567890",
+    "project_id": "1234567890"
+}                   
+Headers
+x-api-key: APIKEYHERE
+Example curl call:
+curl --location --request PUT 'https://zingtree.com/api/session_freeze' \
+--header 'x-api-key: APIKEYHERE' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "session_id": "session_1234567890",
+    "project_id": "1234567890"
+}'
+Example Success (200) Return:
+{
+    "op": "session_freeze",
+    "result": "Session froze."
+}
+Example Error (404) Return:
+{
+    "Error": "Error processing request to freeze session. Session not found."
+}
+tree_sessions
+Description:
+Returns a JSON structure with session information for a particular tree ID and date range.
+
+Start date and end date are in the form of YYYY-MM-DD. If blank, returns sessions for last 30 days.
+
+You can also use date and time (PST) instead of date. These would be like YYYY-MM-DD HH:MM:SS. When calling a URL like this, replace the space character with %20.
+
+If tree is *, return sessions for all trees.
+
+Structure:
+https://zingtree.com/api/tree_sessions/{{apikey}}/{{tree ID}}/{{start date}}/{{end date}}
+
+Live Example:
+https://zingtree.com/api/tree_sessions/6a103737e44e4aa6e1e4b6b0bcb46f83/815089605/2024-12-05/2024-12-12
+Example PHP call:
+zt_tree_sessions('6a103737e44e4aa6e1e4b6b0bcb46f83', '815089605', '2024-12-05', '2024-12-12');
+Example Return:
+{
+    "op": "tree_sessions",
+    "count": 5,
+    "tree_id": 815089605,
+    "start_date": "2016-03-20 00:00:00",
+    "end_date": "2016-03-20 23:59:59",
+    "sessions": [
+        {
+            "session_id": "9f5a6cb4b1dd47c990e230abbdc5baf2",
+            "agent": "",
+            "start_time": "2016-03-20 00:07:55",
+            "last_click_time": "2016-03-20 00:12:11",
+            "resolution_state": "Y",
+            "total_score": "0",
+            "tree_id": "815089605",
+            "duration": 256
+        },
+        {
+            "session_id": "23cd2c6474724190ac551223971a6f54",
+            "agent": "",
+            "start_time": "2016-03-20 00:12:16",
+            "last_click_time": "2016-03-20 00:12:21",
+            "resolution_state": "Y",
+            "total_score": "0",
+            "tree_id": "815089605",
+            "duration": 5
+        },
+        {
+            "session_id": "Gallery53-14584801286490",
+            "agent": "",
+            "start_time": "2016-03-20 06:22:09",
+            "last_click_time": "2016-03-20 06:22:37",
+            "resolution_state": "Y",
+            "total_score": "0",
+            "tree_id": "815089605",
+            "duration": 28
+        },
+        {
+            "session_id": "Gallery53-1458502196365",
+            "agent": "",
+            "start_time": "2016-03-20 12:29:58",
+            "last_click_time": "2016-03-20 12:30:23",
+            "resolution_state": "Y",
+            "total_score": "0",
+            "tree_id": "815089605",
+            "duration": 25
+        },
+        {
+            "session_id": "Gallery53-14585149488285",
+            "agent": "",
+            "start_time": "2016-03-20 16:02:31",
+            "last_click_time": "2016-03-20 16:02:37",
+            "resolution_state": "Y",
+            "total_score": "0",
+            "tree_id": "815089605",
+            "duration": 6
+        }
+    ]
+}
+tree_sessions_last_clicked
+Description:
+Just like tree_sessions, but uses the time of the last click as a date range.
+
+Structure:
+https://zingtree.com/api/tree_sessions_last_clicked/{{apikey}}/{{tree ID}}/{{start date}}/{{end date}}
+
+Live Example:
+https://zingtree.com/api/tree_sessions_last_clicked/6a103737e44e4aa6e1e4b6b0bcb46f83/815089605/2024-12-05/2024-12-12
+Example PHP call:
+zt_tree_sessions_last_clicked('6a103737e44e4aa6e1e4b6b0bcb46f83', '815089605', '2024-12-05', '2024-12-12');
+Example Return:
+{
+    "op": "tree_sessions_last_clicked",
+    "count": 5,
+    "tree_id": 815089605,
+    "start_date": "2016-03-20 00:00:00",
+    "end_date": "2016-03-20 23:59:59",
+    "sessions": [
+        {
+            "session_id": "9f5a6cb4b1dd47c990e230abbdc5baf2",
+            "agent": "",
+            "start_time": "2016-03-20 00:07:55",
+            "last_click_time": "2016-03-20 00:12:11",
+            "resolution_state": "Y",
+            "total_score": "0",
+            "tree_id": "815089605",
+            "duration": 256
+        },
+        {
+            "session_id": "23cd2c6474724190ac551223971a6f54",
+            "agent": "",
+            "start_time": "2016-03-20 00:12:16",
+            "last_click_time": "2016-03-20 00:12:21",
+            "resolution_state": "Y",
+            "total_score": "0",
+            "tree_id": "815089605",
+            "duration": 5
+        },
+        {
+            "session_id": "Gallery53-14584801286490",
+            "agent": "",
+            "start_time": "2016-03-20 06:22:09",
+            "last_click_time": "2016-03-20 06:22:37",
+            "resolution_state": "Y",
+            "total_score": "0",
+            "tree_id": "815089605",
+            "duration": 28
+        },
+        {
+            "session_id": "Gallery53-1458502196365",
+            "agent": "",
+            "start_time": "2016-03-20 12:29:58",
+            "last_click_time": "2016-03-20 12:30:23",
+            "resolution_state": "Y",
+            "total_score": "0",
+            "tree_id": "815089605",
+            "duration": 25
+        },
+        {
+            "session_id": "Gallery53-14585149488285",
+            "agent": "",
+            "start_time": "2016-03-20 16:02:31",
+            "last_click_time": "2016-03-20 16:02:37",
+            "resolution_state": "Y",
+            "total_score": "0",
+            "tree_id": "815089605",
+            "duration": 6
+        }
+    ]
+}
