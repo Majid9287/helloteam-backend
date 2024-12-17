@@ -77,23 +77,27 @@ class ZingtreeDataSyncService {
               { upsert: true, new: true, session }
             );
 
-            // Save nodes
-            const nodeDocuments = treeStructure.nodes.map((node) => ({
-              ticket_id: ticket._id,
-              tree_session_id: treeStructure.tree_id,
-              node_id: node.node_id,
-              page_title: node.page_title,
-              question: node.question,
-              content: node.content,
-              keywords: node.keywords ? node.keywords.split(",") : [],
-              tags: node.tags ? node.tags.split(",") : [],
-              buttons:
-                node.buttons?.map((button) => ({
-                  button_text: button.button_text,
-                  button_link: button.button_link,
-                  button_type: this.detectButtonType(button),
-                })) || [],
-            }));
+            // Save nodes and collect node IDs
+            const nodeIds = [];
+            const nodeDocuments = treeStructure.nodes.map((node) => {
+              nodeIds.push(node.node_id);
+              return {
+                ticket_id: ticket._id,
+                tree_session_id: treeStructure.tree_id,
+                node_id: node.node_id,
+                page_title: node.page_title,
+                question: node.question,
+                content: node.content,
+                keywords: node.keywords ? node.keywords.split(",") : [],
+                tags: node.tags ? node.tags.split(",") : [],
+                buttons:
+                  node.buttons?.map((button) => ({
+                    button_text: button.button_text,
+                    button_link: button.button_link,
+                    button_type: this.detectButtonType(button),
+                  })) || [],
+              };
+            });
 
             // Bulk write nodes
             await Node.bulkWrite(
@@ -107,7 +111,15 @@ class ZingtreeDataSyncService {
                   update: nodeData,
                   upsert: true,
                 },
-              }))
+              })),
+              { session }
+            );
+
+            // Update ticket with node IDs
+            await Ticket.findByIdAndUpdate(
+              ticket._id,
+              { $set: { nodes: nodeIds } },
+              { session }
             );
 
             return {
