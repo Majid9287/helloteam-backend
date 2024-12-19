@@ -1,3 +1,12 @@
 2024-12-15T21:43:04.209Z [error]: Organization validation failed: organizationName: Path `organizationName` is required.
 2024-12-15T21:43:31.072Z [error]: User is not defined
 2024-12-15T21:45:10.176Z [error]: E11000 duplicate key error collection: hellowteam.organizations index: organizationName_1 dup key: { organizationName: "hellowtest" }
+2024-12-19T18:34:12.640Z [error]: E11000 duplicate key error collection: hellowteam.users index: phoneNumber_1 dup key: { phoneNumber: null }
+2024-12-19T18:51:50.828Z [error]: No supervisors found for this organization
+2024-12-19T18:51:51.451Z [error]: No supervisors found for this organization
+2024-12-19T18:52:54.592Z [error]: No supervisors found for this organization
+2024-12-19T18:52:55.004Z [error]: No supervisors found for this organization
+2024-12-19T18:55:36.056Z [error]: No agents found for this organization
+2024-12-19T18:55:36.332Z [error]: No agents found for this organization
+2024-12-19T18:56:26.083Z [error]: No agents found for this organization
+2024-12-19T18:56:26.355Z [error]: No agents found for this organization

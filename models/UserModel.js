@@ -39,6 +39,11 @@ const userSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    greetedByRrganization: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+    },
+    tickets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' }],
     byHelloTeam: {
       type: Boolean, // Tracks if the greeting was triggered by "Hello Team"
       default: false,
