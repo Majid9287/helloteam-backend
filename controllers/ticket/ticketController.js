@@ -22,10 +22,8 @@ import {
     const query = { 
       organization: req.params.organizationId 
     };
-    const tickets = await Ticket.find(query)
-     
-      .sort('-created_at');
-  
+    const tickets = await Ticket.find(query).populate('assigned_agent').sort('-created_at');
+    
     res.status(200).json({
       status: 'success',
       results: tickets.length,
@@ -49,15 +47,15 @@ import {
   
       if (agentId) updateData.assigned_agent = agentId;
       if (supervisorId) updateData.assigned_supervisor = supervisorId;
-  
+   console.log(req.params.id,agentId,supervisorId)
       // Update ticket
       const ticket = await Ticket.findByIdAndUpdate(
         req.params.id,
         updateData,
         { new: true, runValidators: true }
       ).populate([
-        { path: 'assigned_agent', select: 'name email' },
-        { path: 'assigned_supervisor', select: 'name email' }
+        { path: 'assigned_agent'},
+        { path: 'assigned_supervisor' }
       ]);
   
       if (!ticket) {
