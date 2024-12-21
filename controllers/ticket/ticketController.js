@@ -10,6 +10,11 @@ import {
   import catchAsync from '../../utils/catchAsync.js';
   import AppError from '../../utils/appError.js';
   import { sendSuccessResponse, sendErrorResponse } from '../../utils/responseHandler.js';
+
+
+import User from "../../models/UserModel.js";
+
+import mongoose from "mongoose";
   // Use factory methods for standard CRUD
   export const createTicket = createOne(Ticket);
   export const getAllTickets = getAll(Ticket);
@@ -31,43 +36,123 @@ import {
     });
   });
   
-  export const assignTicket = catchAsync(async (req, res) => {
-    try {
-      const { agentId, supervisorId } = req.body;
-      
-      // Check if at least one ID is provided
-      if (!agentId && !supervisorId) {
-        throw new Error('Either agent or supervisor ID must be provided');
-      }
-  
-      // Create update object
-      const updateData = {
-        status: 'in_progress'
-      };
-  
-      if (agentId) updateData.assigned_agent = agentId;
-      if (supervisorId) updateData.assigned_supervisor = supervisorId;
-   console.log(req.params.id,agentId,supervisorId)
-      // Update ticket
-      const ticket = await Ticket.findByIdAndUpdate(
-        req.params.id,
-        updateData,
-        { new: true, runValidators: true }
-      ).populate([
-        { path: 'assigned_agent'},
-        { path: 'assigned_supervisor' }
-      ]);
-  
-      if (!ticket) {
-        throw new Error('Ticket not found');
-      }
-  
-      sendSuccessResponse(res, ticket, 'Ticket assigned successfully');
-      
-    } catch (error) {
-      sendErrorResponse(res, error);
+
+
+export const assignTicket = catchAsync(async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { agentId, supervisorId } = req.body;
+    const ticketId = req.params.id;
+    
+    // Check if at least one ID is provided
+    if (!agentId && !supervisorId) {
+      throw new AppError('Either agent or supervisor ID must be provided', 400);
     }
-  });
+
+    // Get current ticket state to check existing assignments
+    const currentTicket = await Ticket.findById(ticketId);
+    if (!currentTicket) {
+      throw new AppError('Ticket not found', 404);
+    }
+
+    // Handle agent reassignment
+    if (agentId) {
+      // Check if new agent exists and is actually an agent
+      const newAgent = await User.findOne({ 
+        _id: agentId, 
+        role: 'agent'
+      });
+      
+      if (!newAgent) {
+        throw new AppError('Agent not found or user is not an agent', 404);
+      }
+
+      // If there's an existing agent, remove ticket from their list
+      if (currentTicket.assigned_agent) {
+        await User.findByIdAndUpdate(
+          currentTicket.assigned_agent,
+          { $pull: { tickets: ticketId } },
+          { session }
+        );
+      }
+
+      // Add ticket to new agent's list
+      await User.findByIdAndUpdate(
+        agentId,
+        { $addToSet: { tickets: ticketId } },
+        { session }
+      );
+    }
+
+    // Handle supervisor reassignment
+    if (supervisorId) {
+      // Check if new supervisor exists and is actually a supervisor
+      const newSupervisor = await User.findOne({ 
+        _id: supervisorId, 
+        role: 'supervisor'
+      });
+      
+      if (!newSupervisor) {
+        throw new AppError('Supervisor not found or user is not a supervisor', 404);
+      }
+
+      // If there's an existing supervisor, remove ticket from their list
+      if (currentTicket.assigned_supervisor) {
+        await User.findByIdAndUpdate(
+          currentTicket.assigned_supervisor,
+          { $pull: { tickets: ticketId } },
+          { session }
+        );
+      }
+
+      // Add ticket to new supervisor's list
+      await User.findByIdAndUpdate(
+        supervisorId,
+        { $addToSet: { tickets: ticketId } },
+        { session }
+      );
+    }
+
+    // Create update object for ticket
+    const updateData = {
+      status: 'in_progress',
+      ...(agentId && { assigned_agent: agentId }),
+      ...(supervisorId && { assigned_supervisor: supervisorId })
+    };
+
+    // Update ticket
+    const updatedTicket = await Ticket.findByIdAndUpdate(
+      ticketId,
+      updateData,
+      { 
+        new: true, 
+        runValidators: true,
+        session 
+      }
+    ).populate([
+      { path: 'assigned_agent', select: 'name email role' },
+      { path: 'assigned_supervisor', select: 'name email role' }
+    ]);
+
+    await session.commitTransaction();
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Ticket assigned successfully',
+      data: {
+        ticket: updatedTicket
+      }
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+});
 
 export const addSubnode = catchAsync(async (req, res) => {
     const { ticketId, nodeId } = req.params;
