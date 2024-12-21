@@ -91,3 +91,200 @@ export const addSubnode = catchAsync(async (req, res) => {
       }
     });
   });
+
+ // Add these new controller methods to your existing file
+
+export const getTicketWithTree = catchAsync(async (req, res) => {
+  try {
+    const ticket = await Ticket.findById(req.params.id);
+    console.log(req.params.id)
+    if (!ticket) {
+      throw new AppError('Ticket not found', 404);
+    }
+
+    // Get all nodes for this ticket
+    const nodes = await Node.find({ ticket_id: ticket._id });
+    console.log(ticket,nodes )
+    // Create a map of nodes for easier tree building
+    const nodeMap = {};
+    nodes.forEach(node => {
+      nodeMap[node.node_id] = {
+        ...node.toObject(),
+        children: []
+      };
+    });
+
+    // Build the tree structure
+    nodes.forEach(node => {
+      if (node.buttons) {
+        node.buttons.forEach(button => {
+          if (button.button_link && nodeMap[button.button_link]) {
+            nodeMap[node.node_id].children.push(nodeMap[button.button_link]);
+          }
+        });
+      }
+    });
+
+    // Find the root node (node with no parent)
+    const rootNode = nodes.find(node => !nodes.some(n => 
+      n.buttons?.some(b => b.button_link === node.node_id)
+    ));
+
+    const treeStructure = rootNode ? nodeMap[rootNode.node_id] : null;
+
+    sendSuccessResponse(res, {
+      ticket,
+      tree: treeStructure
+    }, 'Ticket tree fetched successfully');
+
+  } catch (error) {
+    sendErrorResponse(res, error);
+  }
+});
+
+export const getAllTicketsWithTree = catchAsync(async (req, res) => {
+  try {
+    const tickets = await Ticket.find(req.query);
+    
+    // Get trees for all tickets
+    const ticketsWithTrees = await Promise.all(tickets.map(async (ticket) => {
+      const nodes = await Node.find({ ticket_id: ticket._id });
+      
+      // Create nodes map
+      const nodeMap = {};
+      nodes.forEach(node => {
+        nodeMap[node.node_id] = {
+          ...node.toObject(),
+          children: []
+        };
+      });
+
+      // Build relationships
+      nodes.forEach(node => {
+        if (node.buttons) {
+          node.buttons.forEach(button => {
+            if (button.button_link && nodeMap[button.button_link]) {
+              nodeMap[node.node_id].children.push(nodeMap[button.button_link]);
+            }
+          });
+        }
+      });
+
+      // Find root node
+      const rootNode = nodes.find(node => !nodes.some(n => 
+        n.buttons?.some(b => b.button_link === node.node_id)
+      ));
+
+      return {
+        ticket,
+        tree: rootNode ? nodeMap[rootNode.node_id] : null
+      };
+    }));
+
+    sendSuccessResponse(res, {
+      results: ticketsWithTrees.length,
+      tickets: ticketsWithTrees
+    }, 'Tickets with trees fetched successfully');
+
+  } catch (error) {
+    sendErrorResponse(res, error);
+  }
+});
+
+export const updateNode = catchAsync(async (req, res) => {
+  try {
+    const { ticketId, nodeId } = req.params;
+    const updateData = req.body;
+
+    const node = await Node.findOneAndUpdate(
+      { ticket_id: ticketId, node_id: nodeId },
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!node) {
+      throw new AppError('Node not found', 404);
+    }
+
+    sendSuccessResponse(res, { node }, 'Node updated successfully');
+  } catch (error) {
+    sendErrorResponse(res, error);
+  }
+});
+
+export const createNode = catchAsync(async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    const nodeData = req.body;
+
+    // Verify ticket exists
+    const ticket = await Ticket.findById(ticketId);
+    if (!ticket) {
+      throw new AppError('Ticket not found', 404);
+    }
+
+    // Create new node
+    const node = await Node.create({
+      ...nodeData,
+      ticket_id: ticketId
+    });
+
+    // Update ticket's nodes array
+    await Ticket.findByIdAndUpdate(
+      ticketId,
+      { $push: { nodes: node._id } }
+    );
+
+    sendSuccessResponse(res, { node }, 'Node created successfully');
+  } catch (error) {
+    sendErrorResponse(res, error);
+  }
+});
+
+export const deleteNode = catchAsync(async (req, res) => {
+  try {
+    const { ticketId, nodeId } = req.params;
+
+    // Delete node
+    const node = await Node.findOneAndDelete({
+      ticket_id: ticketId,
+      node_id: nodeId
+    });
+
+    if (!node) {
+      throw new AppError('Node not found', 404);
+    }
+
+    // Remove node reference from ticket
+    await Ticket.findByIdAndUpdate(ticketId, {
+      $pull: { nodes: node._id }
+    });
+
+    sendSuccessResponse(res, null, 'Node deleted successfully');
+  } catch (error) {
+    sendErrorResponse(res, error);
+  }
+});
+
+// Add this utility function to help with tree operations
+const buildTreeStructure = (nodes) => {
+  const nodeMap = {};
+  nodes.forEach(node => {
+    nodeMap[node.node_id] = {
+      ...node.toObject(),
+      children: []
+    };
+  });
+
+  nodes.forEach(node => {
+    if (node.buttons) {
+      node.buttons.forEach(button => {
+        if (button.button_link && nodeMap[button.button_link]) {
+          nodeMap[node.node_id].children.push(nodeMap[button.button_link]);
+        }
+      });
+    }
+  });
+
+  return nodeMap;
+};
