@@ -36,7 +36,7 @@ app.use('/api/organization', organization);
 app.use('/api/tickets', tickets);
 app.use('/api/session-forms', formRoutes);
 app.use('/api/session-notes', sessionNote);
-// app.use('/api/v1/users', userRoutes);
+app.use('/api/users', userRoutes);
 // Root Route
 app.get('/', (req, res) => {
     res.send('Backend is running...');
