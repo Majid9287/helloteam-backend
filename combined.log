@@ -10,3 +10,5 @@
 2024-12-19T18:55:36.332Z [error]: No agents found for this organization
 2024-12-19T18:56:26.083Z [error]: No agents found for this organization
 2024-12-19T18:56:26.355Z [error]: No agents found for this organization
+2024-12-23T18:15:44.311Z [error]: E11000 duplicate key error collection: hellowteam.organizations index: apiKey_1 dup key: { apiKey: "ddfaddd238a980d7ad3e9efa6ba74f63" }
+2024-12-24T17:50:06.522Z [error]: read ECONNRESET

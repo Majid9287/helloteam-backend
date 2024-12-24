@@ -13,7 +13,8 @@ ticketSyncEmitter.on('startSync', async ({ organizationId, apiKey }) => {
 
     const zingtreeService = new ZingtreeDataSyncService(apiKey);
     const results = await zingtreeService.syncTreeData(organizationId); // Corrected method name
-
+    const results1 =await zingtreeService.syncSessionData(organizationId, '2024-12-16', '2024-12-26');
+    console.log(results1)
     await Organization.findByIdAndUpdate(organizationId, {
       syncStatus: 'completed',
       lastSyncAt: new Date(),
