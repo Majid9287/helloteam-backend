@@ -367,3 +367,28 @@ const buildTreeStructure = (nodes) => {
 
   return nodeMap;
 };
+export const updateTicketStatus = catchAsync(async (req, res) => {
+  const { id: ticketId } = req.params;
+  const { status } = req.body;
+
+  // Validate the new status
+  const validStatuses = ["new", "in_progress", "resolved", "closed"];
+  if (!validStatuses.includes(status)) {
+    throw new AppError("Invalid status value", 400);
+  }
+
+  // Update the ticket's status
+  const updatedTicket = await Ticket.findByIdAndUpdate(
+    ticketId,
+    { status },
+    { new: true, runValidators: true }
+  );
+
+  // Check if the ticket was found
+  if (!updatedTicket) {
+    throw new AppError("Ticket not found", 404);
+  }
+
+  // Send the updated ticket as a response
+  sendSuccessResponse(res, updatedTicket, "Ticket status updated successfully");
+});
