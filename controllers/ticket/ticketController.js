@@ -412,5 +412,5 @@ export const setTicketPriority = catchAsync(async (req, res) => {
     throw new AppError("Ticket not found", 404);
   }
 
-  sendSuccessResponse(res, { ticket: updatedTicket }, "Priority updated successfully");
+  sendSuccessResponse(res,  updatedTicket , "Priority updated successfully");
 });
