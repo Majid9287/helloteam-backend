@@ -392,3 +392,25 @@ export const updateTicketStatus = catchAsync(async (req, res) => {
   // Send the updated ticket as a response
   sendSuccessResponse(res, updatedTicket, "Ticket status updated successfully");
 });
+export const setTicketPriority = catchAsync(async (req, res) => {
+  const { id: ticketId } = req.params;
+  const { priority } = req.body;
+
+  // Validate priority
+  const validPriorities = ["low", "medium", "high", "urgent"];
+  if (!validPriorities.includes(priority)) {
+    throw new AppError("Invalid priority value", 400);
+  }
+
+  const updatedTicket = await Ticket.findByIdAndUpdate(
+    ticketId,
+    { priority },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedTicket) {
+    throw new AppError("Ticket not found", 404);
+  }
+
+  sendSuccessResponse(res, { ticket: updatedTicket }, "Priority updated successfully");
+});

@@ -8,14 +8,14 @@ import {
   getTicketsByOrganization,
   assignTicket,
   getTicketWithTree,
-  updateTicketStatus 
-
+  updateTicketStatus,
+  setTicketPriority,
 } from "../controllers/ticket/ticketController.js";
 
 const router = express.Router();
-
+router.route("/:id/priority").patch(setTicketPriority);
 router.route("/").post(createTicket).get(getAllTickets);
-router.patch("/:id/status", updateTicketStatus);
+router.route("/:id/status").patch(updateTicketStatus);
 router.route("/:id").patch(updateTicket).delete(deleteTicket);
 router.route("/:id/").get(getTicketWithTree);
 router.route("/organization/:organizationId").get(getTicketsByOrganization);
