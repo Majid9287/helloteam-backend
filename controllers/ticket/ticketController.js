@@ -382,7 +382,7 @@ export const updateTicketStatus = catchAsync(async (req, res) => {
     ticketId,
     { status },
     { new: true, runValidators: true }
-  );
+  ).populate("assigned_agent");;
 
   // Check if the ticket was found
   if (!updatedTicket) {
@@ -406,7 +406,7 @@ export const setTicketPriority = catchAsync(async (req, res) => {
     ticketId,
     { priority },
     { new: true, runValidators: true }
-  );
+  ).populate("assigned_agent");;
 
   if (!updatedTicket) {
     throw new AppError("Ticket not found", 404);
