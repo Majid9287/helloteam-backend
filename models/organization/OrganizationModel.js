@@ -1,3 +1,4 @@
+//models/organization/OrganizationModel.js
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 
@@ -42,6 +43,9 @@ const organizationSchema = new mongoose.Schema({
       ref: 'User',
     },
   ],
+},
+{
+  timestamps: true, // Enables createdAt and updatedAt fields
 });
 
 

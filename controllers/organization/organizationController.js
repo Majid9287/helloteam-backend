@@ -1,4 +1,4 @@
-
+//controllers/organization/organizationController.js
 import { createOne, getAll, getOne, updateOne, deleteOne } from '../../factory/handleFactory.js';
 import Organization from '../../models/organization/OrganizationModel.js';
 import  { ticketSyncEmitter }  from '../../services/eventEmitter/index.js';

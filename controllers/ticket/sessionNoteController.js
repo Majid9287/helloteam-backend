@@ -10,7 +10,7 @@ import {
   import { sendSuccessResponse, sendErrorResponse } from '../../utils/responseHandler.js';
   
   // Session Notes CRUD
-  export const createSessionNote = createOne(SessionNote);
+  // export const createSessionNote = createOne(SessionNote);
   export const getAllSessionNotes = getAll(SessionNote);
   export const getSessionNote = getOne(SessionNote);
   export const updateSessionNote = updateOne(SessionNote);
@@ -43,4 +43,33 @@ import {
     }, 'Session notes fetched successfully');
   });
   
-  
+
+// Generate random 8 digit session ID
+const generateSessionId = () => {
+  return Math.floor(10000000 + Math.random() * 90000000).toString();
+};
+
+export const createSessionNote = catchAsync(async (req, res) => {
+  try {
+    const { ticket_id, notes, agent,session_id } = req.body;
+    
+    if (!ticket_id || !notes) {
+      throw new Error('Ticket ID and notes are required');
+    }
+
+    const sessionNote = await SessionNote.create({
+      ticket_id,
+      session_id:session_id || generateSessionId(),
+      notes,
+      agent,
+      created_by: req.user.id
+    });
+
+    await sessionNote.populate('created_by');
+
+    sendSuccessResponse(res, sessionNote, 'Session note created successfully');
+    
+  } catch (error) {
+    sendErrorResponse(res, error);
+  }
+});

@@ -1,3 +1,4 @@
+//models/ticket/SessionFormData.js
 import mongoose from 'mongoose';
 
 // Schema for storing session form data
@@ -24,7 +25,8 @@ const sessionFormDataSchema = new mongoose.Schema({
   resolution_state: String,
   total_score: String,
   duration_seconds: Number,
-  agent: String
+  agent: String,
+   created_by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 }, {
   timestamps: true
 });

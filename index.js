@@ -5,7 +5,7 @@ import cors from 'cors';
 import {connectDB} from './config/dbConfig.js';
 // Entry point (e.g., server.js or app.js)
 import './services/ticketSyncService.js';
- 
+import './scheduler.js';
 // Load environment variables
 dotenv.config();
 const app = express();

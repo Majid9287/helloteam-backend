@@ -1,3 +1,4 @@
+//models/ticket/NodeModel.js
 import mongoose from 'mongoose';
 
 const nodeSchema = new mongoose.Schema({

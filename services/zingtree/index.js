@@ -113,57 +113,48 @@ class ZingtreeDataSyncService {
               tree_id: tree.tree_id,
               tree_name: tree.name,
               notes: tree.description,
-              tags: tree.tags ? tree.tags.split(",") : [],
               organization: organizationId,
             };
 
             const ticket = await Ticket.findOneAndUpdate(
               { tree_id: tree.tree_id },
-              ticketData,
+              { $set: ticketData, $addToSet: { tags: { $each: tree.tags ? tree.tags.split(",") : [] } } },
               { upsert: true, new: true, session }
             );
 
-            const nodeIds = [];
-            const nodeDocuments = treeStructure.nodes.map((node) => {
-              const nodeObjectId = new mongoose.Types.ObjectId(); // Generate new ObjectId
-              nodeIds.push(nodeObjectId);
-              return {
-                _id: nodeObjectId,
-                ticket_id: ticket._id,
-                tree_session_id: treeStructure.tree_id,
-                node_id: node.node_id,
-                page_title: node.page_title,
-                question: node.question,
-                content: node.content,
-                keywords: node.keywords ? node.keywords.split(",") : [],
-                tags: node.tags ? node.tags.split(",") : [],
-                buttons:
-                  node.buttons?.map((button) => ({
-                    button_text: button.button_text,
-                    button_link: button.button_link,
-                    button_type: this.detectButtonType(button),
-                  })) || [],
-              };
-            });
-
-            await Node.bulkWrite(
-              nodeDocuments.map((nodeData) => ({
-                updateOne: {
-                  filter: {
-                    ticket_id: ticket._id,
-                    node_id: nodeData.node_id,
-                    tree_session_id: treeStructure.tree_id,
-                  },
-                  update: nodeData,
-                  upsert: true,
+            const nodeUpdates = treeStructure.nodes.map((node) => ({
+              updateOne: {
+                filter: {
+                  ticket_id: ticket._id,
+                  node_id: node.node_id,
+                  tree_session_id: treeStructure.tree_id,
                 },
-              })),
-              { session }
-            );
+                update: {
+                  $set: {
+                    page_title: node.page_title,
+                    question: node.question,
+                    content: node.content,
+                    buttons: node.buttons?.map((button) => ({
+                      button_text: button.button_text,
+                      button_link: button.button_link,
+                      button_type: this.detectButtonType(button),
+                    })) || [],
+                  },
+                  $addToSet: {
+                    keywords: { $each: node.keywords ? node.keywords.split(",") : [] },
+                    tags: { $each: node.tags ? node.tags.split(",") : [] },
+                  },
+                },
+                upsert: true,
+              },
+            }));
 
+            await Node.bulkWrite(nodeUpdates, { session });
+
+            const updatedNodes = await Node.find({ ticket_id: ticket._id }, { _id: 1 });
             await Ticket.findByIdAndUpdate(
               ticket._id,
-              { $set: { nodes: nodeIds } },
+              { $addToSet: { nodes: { $each: updatedNodes.map(node => node._id) } } },
               { session }
             );
 
@@ -171,7 +162,7 @@ class ZingtreeDataSyncService {
               success: true,
               tree_id: tree.tree_id,
               ticket_id: ticket._id,
-              node_count: nodeDocuments.length,
+              node_count: treeStructure.nodes.length,
             };
           } catch (error) {
             console.error(`Failed to process tree ${tree.tree_id}:`, error);
@@ -226,36 +217,40 @@ class ZingtreeDataSyncService {
                   ]);
 
                   if (formData) {
-                    await SessionFormData.findOneAndUpdate(
+                    await SessionFormData.updateOne(
                       {
                         ticket_id: ticket._id,
                         session_id: sessionInfo.session_id,
                       },
                       {
-                        form_data: formData,
-                        source: sessionData?.source,
-                        start_time: sessionData?.start_time_utc,
-                        last_click_time: sessionData?.last_click_time_utc,
-                        resolution_state: sessionInfo.resolution_state,
-                        total_score: sessionInfo.total_score,
-                        duration_seconds: sessionInfo.duration,
-                        agent: sessionInfo.agent,
+                        $set: {
+                          form_data: formData,
+                          source: sessionData?.source,
+                          start_time: sessionData?.start_time_utc,
+                          last_click_time: sessionData?.last_click_time_utc,
+                          resolution_state: sessionInfo.resolution_state,
+                          total_score: sessionInfo.total_score,
+                          duration_seconds: sessionInfo.duration,
+                          agent: sessionInfo.agent,
+                        },
                       },
-                      { upsert: true, new: true, session }
+                      { upsert: true, session }
                     );
                   }
 
                   if (notes?.notes) {
-                    await SessionNote.findOneAndUpdate(
+                    await SessionNote.updateOne(
                       {
                         ticket_id: ticket._id,
                         session_id: sessionInfo.session_id,
                       },
                       {
-                        notes: notes.notes,
-                        agent: sessionInfo.agent,
+                        $set: {
+                          notes: notes.notes,
+                          agent: sessionInfo.agent,
+                        },
                       },
-                      { upsert: true, new: true, session }
+                      { upsert: true, session }
                     );
                   }
 
@@ -335,3 +330,4 @@ class ZingtreeDataSyncService {
 }
 
 export default ZingtreeDataSyncService;
+
