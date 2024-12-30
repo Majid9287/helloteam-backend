@@ -28,7 +28,7 @@ import {
     const totalCount = await SessionNote.countDocuments({ ticket_id: ticketId });
     
     // Get paginated notes
-    const notes = await SessionNote.find({ ticket_id: ticketId })
+    const notes = await SessionNote.find({ ticket_id: ticketId }).populate('created_by')
       .sort('-createdAt')
       .skip(skip)
       .limit(limit);
